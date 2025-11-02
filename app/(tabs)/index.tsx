@@ -128,7 +128,7 @@ export default function App() {
     sessions.push(session);
     await AsyncStorage.setItem("sessions", JSON.stringify(sessions));
 
-    Alert.alert("Saved", `Session for ${farmerName} saved`);
+    // Alert.alert("Saved", `Session for ${farmerName} saved`);
   };
 
   const handleFinish = () => {

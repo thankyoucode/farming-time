@@ -1,6 +1,7 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { useEffect, useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
+import React, { useCallback, useState } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -98,34 +99,17 @@ export default function Records() {
     fetchSessions();
   };
 
-  useEffect(() => {
-    fetchSessions();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchSessions();
+    }, [])
+  );
 
   return (
     <ScrollView
       style={styles.flex}
       contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
     >
-      <TouchableOpacity
-        onPress={fetchSessions}
-        style={{
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: "#02ac81ff",
-          borderRadius: 10,
-          padding: 10,
-          flex: 1,
-          marginHorizontal: 4,
-          marginVertical: 8,
-        }}
-      >
-        <MaterialCommunityIcons name="update" size={32} color="#fff" />
-        <Text style={{ color: "#fff", fontSize: 12, marginTop: 4 }}>
-          Update
-        </Text>
-      </TouchableOpacity>
-
       {Object.keys(groupedSessions).length === 0 && (
         <Text style={styles.noRecord}>No records found.</Text>
       )}
