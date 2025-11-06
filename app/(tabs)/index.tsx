@@ -1,6 +1,5 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { StatusBar } from "expo-status-bar";
+import { useRealm } from "@realm/react";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
@@ -13,6 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Realm from "realm";
 
 const THEME = {
   primary: "#2E7D32",
@@ -46,6 +46,7 @@ export default function App() {
 
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const realm = useRealm();
   const calculateActiveTime = () => {
     if (!startTime) return 0;
     let active = (endTime ?? Date.now()) - startTime;
@@ -70,6 +71,7 @@ export default function App() {
 
   const addLog = (type: "start" | "pause" | "resume" | "finish") => {
     setLogs((prev) => [...prev, { type, time: Date.now() }]);
+    console.log(type);
   };
 
   const handleStart = () => {
@@ -111,33 +113,36 @@ export default function App() {
     return (time / 3600000) * rate;
   };
 
-  const saveSession = async () => {
-    if (!startTime) return;
-    const session = {
-      farmerName,
-      startTime,
-      pauseTimes,
-      endTime: Date.now(),
-      totalTime: calculateActiveTime(),
-      pricePerHour,
-      totalCost: calculateCost(),
-      logs,
-    };
-    const existing = await AsyncStorage.getItem("sessions");
-    const sessions = existing ? JSON.parse(existing) : [];
-    sessions.push(session);
-    await AsyncStorage.setItem("sessions", JSON.stringify(sessions));
-
-    // Alert.alert("Saved", `Session for ${farmerName} saved`);
-  };
-
   const handleFinish = () => {
     if (!startTime || endTime) return;
-    setEndTime(Date.now());
+
+    const now = Date.now();
+    const newLogs: {
+      type: "start" | "pause" | "resume" | "finish";
+      time: number;
+    }[] = [...logs, { type: "finish", time: now }];
+
+    setEndTime(now);
     setIsPaused(false);
-    addLog("finish");
     setElapsed(calculateActiveTime());
-    saveSession();
+    setLogs(newLogs);
+
+    realm.write(() => {
+      realm.create("Session", {
+        _id: new Realm.BSON.ObjectId(),
+        farmerName,
+        startTime,
+        pauseTimes,
+        endTime: now,
+        totalTime: calculateActiveTime(),
+        pricePerHour,
+        totalCost: calculateCost(),
+        logs: newLogs,
+      });
+    });
+
+    console.log(logs);
+    console.log(newLogs);
   };
 
   const ControlButton = ({
@@ -183,7 +188,6 @@ export default function App() {
       style={styles.flex}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <StatusBar style="dark" />
       <ScrollView
         contentContainerStyle={styles.container}
         keyboardShouldPersistTaps="handled"
