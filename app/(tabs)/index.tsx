@@ -71,7 +71,6 @@ export default function App() {
 
   const addLog = (type: "start" | "pause" | "resume" | "finish") => {
     setLogs((prev) => [...prev, { type, time: Date.now() }]);
-    console.log(type);
   };
 
   const handleStart = () => {
@@ -140,9 +139,6 @@ export default function App() {
         logs: newLogs,
       });
     });
-
-    console.log(logs);
-    console.log(newLogs);
   };
 
   const ControlButton = ({
